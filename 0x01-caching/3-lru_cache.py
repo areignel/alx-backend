@@ -1,101 +1,51 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3
+""" LRU Caching """
 
-"""
-
-LRU Caching
-
-"""
-
-
-
-
-
-from lib2to3.pgen2.token import BACKQUOTE
-
-from typing import OrderedDict
-
-
-
-
-
-BaseCaching = __import__('base_caching').BaseCaching
-
-
-
+from base_caching import BaseCaching
 
 
 class LRUCache(BaseCaching):
-
-    """
-
-    class LRUCache that inherits from BaseCaching and is a caching system
-
-    """
-
-
+    """ LRU caching """
 
     def __init__(self):
-
-        """
-
-        Init method
-
-        """
-
+        """ Constructor """
         super().__init__()
-
-        self.lru_order = OrderedDict()
-
-
+        self.queue = []
 
     def put(self, key, item):
+        """ Puts item in cache """
+        if key is None or item is None:
+            return
 
-        """
-
-        Must assign to the dictionary self.cache_data
-
-        the item value for the key key.
-
-        """
-
-        if key and item:
-
-            self.lru_order[key] = item
-
-            self.lru_order.move_to_end(key)
-
-            self.cache_data[key] = item
-
-
+        self.cache_data[key] = item
 
         if len(self.cache_data) > BaseCaching.MAX_ITEMS:
+            first = self.get_first_list(self.queue)
+            if first:
+                self.queue.pop(0)
+                del self.cache_data[first]
+                print("DISCARD: {}".format(first))
 
-            item_discarded = next(iter(self.lru_order))
-
-            del self.cache_data[item_discarded]
-
-            print("DISCARD:", item_discarded)
-
-
-
-        if len(self.lru_order) > BaseCaching.MAX_ITEMS:
-
-            self.lru_order.popitem(last=False)
-
-
+        if key not in self.queue:
+            self.queue.append(key)
+        else:
+            self.mv_last_list(key)
 
     def get(self, key):
+        """ Gets item from cache """
+        item = self.cache_data.get(key, None)
+        if item is not None:
+            self.mv_last_list(key)
+        return item
 
-        """
+    def mv_last_list(self, item):
+        """ Moves element to last idx of list """
+        length = len(self.queue)
+        if self.queue[length - 1] != item:
+            self.queue.remove(item)
+            self.queue.append(item)
 
-        Must return the value in self.cache_data linked to key.
-
-        """
-
-        if key in self.cache_data:
-
-            self.lru_order.move_to_end(key)
-
-            return self.cache_data[key]
-
-        return None
+    @staticmethod
+    def get_first_list(array):
+        """ Get first element of list or None """
+        return array[0] if array else None
